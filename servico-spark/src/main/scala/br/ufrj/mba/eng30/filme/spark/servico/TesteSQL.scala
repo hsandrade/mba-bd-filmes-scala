@@ -1,7 +1,6 @@
 package br.ufrj.mba.eng30.filme.spark.servico
 
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.Row
+import org.apache.spark.sql._
 import org.apache.spark.sql.types._
 
 object TesteSQL {

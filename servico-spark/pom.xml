@@ -23,6 +23,14 @@
 		<scala.compat.version>2.11</scala.compat.version>
 	</properties>
 
+	<repositories>
+		<repository>
+			<id>spark-jobserver</id>
+			<name>spark-jobserver</name>
+			<url>https://dl.bintray.com/spark-jobserver/maven</url>
+		</repository>
+	</repositories>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.scala-lang</groupId>
@@ -59,8 +67,11 @@
 			<artifactId>spark-core_2.11</artifactId>
 			<version>2.1.1</version>
 		</dependency>
-
-
+		<dependency>
+			<groupId>spark.jobserver</groupId>
+			<artifactId>job-server-api_2.11</artifactId>
+			<version>0.7.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -72,18 +83,15 @@
 				<groupId>net.alchim31.maven</groupId>
 				<artifactId>scala-maven-plugin</artifactId>
 				<version>3.2.0</version>
- 				<executions>
+				<executions>
 					<execution>
 						<goals>
 							<goal>compile</goal>
 							<goal>testCompile</goal>
 						</goals>
 						<configuration>
-						<!-- 	<args>
-								<arg>-make:transitive</arg>
-								<arg>-dependencyfile</arg>
-								<arg>${project.build.directory}/.scala_dependencies</arg>
-							</args> -->
+							<!-- <args> <arg>-make:transitive</arg> <arg>-dependencyfile</arg> 
+								<arg>${project.build.directory}/.scala_dependencies</arg> </args> -->
 						</configuration>
 					</execution>
 				</executions>
