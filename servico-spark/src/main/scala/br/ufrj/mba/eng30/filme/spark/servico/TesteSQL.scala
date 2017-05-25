@@ -23,6 +23,9 @@ object TesteSQL {
     import spark.implicits._
     import spark.sql
     
+    
+    //val sqlContext = new org.apache.spark.sql.hive.HiveContext(sc)
+
     //deletar a tabela para fins de teste
     spark.sql("DROP TABLE IF EXISTS cliente")
     
