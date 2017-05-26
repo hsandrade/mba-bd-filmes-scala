@@ -40,7 +40,7 @@ object TesteObserverSQL extends NewSparkJob {
 
     spark.sql("select * from clienteTemp").show
     
-    spark.close()
+    //spark.close()
                   
     "Resultado nomal"
   }
