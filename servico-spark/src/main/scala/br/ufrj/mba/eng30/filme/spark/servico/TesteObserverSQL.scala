@@ -40,7 +40,9 @@ object TesteObserverSQL extends NewSparkJob {
 
     val cliDfTemp = spark.sql("select * from clienteTemp")
     
-    cliDfTemp.select("idcli", "cidade").toString()
+    cliDfTemp.select("idcli", "cidade").printSchema()
+    
+    "Resultado 2 - validar"
     
     //spark.close()
   }
