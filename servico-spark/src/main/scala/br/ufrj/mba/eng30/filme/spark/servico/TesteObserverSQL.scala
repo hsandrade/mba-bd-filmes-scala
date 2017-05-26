@@ -40,8 +40,7 @@ object TesteObserverSQL extends NewSparkJob {
 
     val cliDfTemp = spark.sql("select * from clienteTemp")
     
-    cliDfTemp.toJSON.write.json("hdfs://hadoop-master:9000/mba/teste/clientes-json-2.csv")
-
+    //cliDfTemp.toJSON.write.json("hdfs://hadoop-master:9000/mba/teste/clientes-json-2.csv")
     
     "Resultado 333 - validar : hdfs://hadoop-master:9000/mba/teste/clientes-json-2.csv"
     
