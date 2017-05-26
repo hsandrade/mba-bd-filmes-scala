@@ -12,7 +12,7 @@ import org.apache.spark.sql.types._
 object TesteObserverSQL extends NewSparkJob {
 
   type JobData = Seq[String]
-  type JobOutput = Dataset[String]
+  type JobOutput = String
 
   def runJob(sc: SparkContext, runtime: JobEnvironment, data: JobData): JobOutput = {
     val spark = SparkSession
@@ -40,7 +40,7 @@ object TesteObserverSQL extends NewSparkJob {
 
     val cliDfTemp = spark.sql("select * from clienteTemp")
     
-    cliDfTemp.select("idcli", "cidade").toJSON
+    cliDfTemp.select("idcli", "cidade").toString()
     
     //spark.close()
   }
