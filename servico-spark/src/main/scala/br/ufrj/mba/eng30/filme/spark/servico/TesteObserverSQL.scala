@@ -12,7 +12,7 @@ import org.apache.spark.sql.types._
 object TesteObserverSQL extends NewSparkJob {
 
   type JobData = Seq[String]
-  type JobOutput = String
+  type JobOutput = Array[String]
 
   def runJob(sc: SparkContext, runtime: JobEnvironment, data: JobData): JobOutput = {
     val spark = SparkSession
@@ -38,9 +38,12 @@ object TesteObserverSQL extends NewSparkJob {
     //criar tabela temporaria
     cliDf.createOrReplaceTempView("clienteTemp")
 
-    val cliDfTemp = spark.sql("select * from clienteTemp").show
-        
-    "Resultado 2222 - validar"
+    val cliDfTemp = spark.sql("select * from clienteTemp")
+    
+    cliDfTemp.toJSON.collect
+
+    
+    //"Resultado 2222 - validar"
     
     //spark.close()
   }
