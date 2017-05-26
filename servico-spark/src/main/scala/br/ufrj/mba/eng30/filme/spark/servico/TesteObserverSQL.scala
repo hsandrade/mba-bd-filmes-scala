@@ -9,23 +9,34 @@ import scala.util.Try
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
 
+/**
+ * Classe de Teste para utilizar o NewSparkJob,
+ * possibilitando que a classe possa ser executada por uma aplicação
+ * web remota via Spark JObserver.
+ */
 object TesteObserverSQL extends NewSparkJob {
 
-  type JobData = Seq[String]
+  //tipo de objeto a ser informado no parametro da aplicacao
+  type JobData = String
   
   //tipo de objeto a ser retornado pelo Job
   type JobOutput = Array[String]
 
+  /**
+   * Executa o Job.
+   * Recebe sparkContext, 
+   * runtime do ambiente do Job,
+   * e "data" que representa a informacao enviada como parametro (ex: conteudo do body).
+   */
   def runJob(sc: SparkContext, runtime: JobEnvironment, data: JobData): JobOutput = {
+    //inicia uma session com suporte a SQL
     val spark = SparkSession
       .builder()
       .appName("TesteObserverSQL")
       //.enableHiveSupport()
       .getOrCreate()
-
-    //sc.parallelize(data).countByValue
       
-    //criar o schema
+    //criar o schema para parse do CSV
     val structCli = StructType(
                   StructField("idcli",StringType) :: 
                   StructField("cidade",StringType) ::
@@ -35,13 +46,15 @@ object TesteObserverSQL extends NewSparkJob {
     //criar um DataFrame a partir de um CSV
     val cliDf = spark.read.schema(structCli).csv("hdfs://hadoop-master:9000/mba/teste/clientes.csv")
     
-    cliDf.show
+    //cliDf.show
     
-    //criar tabela temporaria
+    //criar tabela temporaria a partir do resultado do CSV
     cliDf.createOrReplaceTempView("clienteTemp")
 
+    //executa consulta 
     val cliDfTemp = spark.sql("select idcli,cidade from clienteTemp")
     
+    //grava o DataFrame no formato JSON no HDFS (precisa de melhoras, o DataFrame cria um diretorio...)
     //cliDfTemp.toJSON.write.json("hdfs://hadoop-master:9000/mba/teste/clientes-json-2.csv")
     
     //"Resultado 555 - validar : hdfs://hadoop-master:9000/mba/teste/clientes-json-2.csv"
@@ -50,8 +63,11 @@ object TesteObserverSQL extends NewSparkJob {
     cliDfTemp.toJSON.collect
   }
 
+  /**
+   * Valida se a aplicacao recebeu algum parametro, com base no nome "idCliente".
+   */
   def validate(sc: SparkContext, runtime: JobEnvironment, config: Config): JobData Or Every[ValidationProblem] = {
-    Try(config.getString("input.string").split(" ").toSeq)
+    Try(config.getString("idCliente"))
       .map(words => Good(words))
       .getOrElse(Bad(One(SingleProblem("No input.string param"))))
   }
