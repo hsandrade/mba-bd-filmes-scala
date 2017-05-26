@@ -18,7 +18,7 @@ object TesteObserverSQL extends NewSparkJob {
     val spark = SparkSession
       .builder()
       .appName("TesteObserverSQL")
-      .enableHiveSupport()
+      //.enableHiveSupport()
       .getOrCreate()
 
     //sc.parallelize(data).countByValue
