@@ -12,7 +12,7 @@ import org.apache.spark.sql.types._
 object TesteObserverSQL extends NewSparkJob {
 
   type JobData = Seq[String]
-  type JobOutput = Array[String]
+  type JobOutput = String
 
   def runJob(sc: SparkContext, runtime: JobEnvironment, data: JobData): JobOutput = {
     val spark = SparkSession
@@ -40,10 +40,10 @@ object TesteObserverSQL extends NewSparkJob {
 
     val cliDfTemp = spark.sql("select * from clienteTemp")
     
-    cliDfTemp.toJSON.collect
+    cliDfTemp.toJSON.write.json("hdfs://hadoop-master:9000/mba/teste/clientes-json-2.csv")
 
     
-    //"Resultado 2222 - validar"
+    "Resultado 333 - validar : hdfs://hadoop-master:9000/mba/teste/clientes-json-2.csv"
     
     //spark.close()
   }
