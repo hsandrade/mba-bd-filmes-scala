@@ -38,10 +38,8 @@ object TesteObserverSQL extends NewSparkJob {
     //criar tabela temporaria
     cliDf.createOrReplaceTempView("clienteTemp")
 
-    val cliDfTemp = spark.sql("select * from clienteTemp")
-    
-    cliDfTemp.select("idcli", "cidade").printSchema()
-    
+    val cliDfTemp = spark.sql("select * from clienteTemp").show
+        
     "Resultado 2 - validar"
     
     //spark.close()
