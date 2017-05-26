@@ -12,6 +12,8 @@ import org.apache.spark.sql.types._
 object TesteObserverSQL extends NewSparkJob {
 
   type JobData = Seq[String]
+  
+  //tipo de objeto a ser retornado pelo Job
   type JobOutput = Array[String]
 
   def runJob(sc: SparkContext, runtime: JobEnvironment, data: JobData): JobOutput = {
@@ -38,15 +40,14 @@ object TesteObserverSQL extends NewSparkJob {
     //criar tabela temporaria
     cliDf.createOrReplaceTempView("clienteTemp")
 
-    val cliDfTemp = spark.sql("select * from clienteTemp")
+    val cliDfTemp = spark.sql("select idcli,cidade from clienteTemp")
     
     //cliDfTemp.toJSON.write.json("hdfs://hadoop-master:9000/mba/teste/clientes-json-2.csv")
     
-    "Resultado 555 - validar : hdfs://hadoop-master:9000/mba/teste/clientes-json-2.csv"
+    //"Resultado 555 - validar : hdfs://hadoop-master:9000/mba/teste/clientes-json-2.csv"
     
+    //retorna um String representando o JSON do DataFrame
     cliDfTemp.toJSON.collect
-    
-    //spark.close()
   }
 
   def validate(sc: SparkContext, runtime: JobEnvironment, config: Config): JobData Or Every[ValidationProblem] = {
