@@ -40,7 +40,7 @@ object TesteObserverSQL extends NewSparkJob {
 
     val cliDfTemp = spark.sql("select * from clienteTemp").show
         
-    "Resultado 2 - validar"
+    "Resultado 2222 - validar"
     
     //spark.close()
   }
