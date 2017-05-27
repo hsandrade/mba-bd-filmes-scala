@@ -32,7 +32,7 @@ object TopRentCateg extends NewSparkJob {
     //inicia uma session com suporte a SQL
     val spark = SparkSession
       .builder()
-      .appName("TesteObserverSQL")
+      .appName("TopFilmeRentaveis")
       //.enableHiveSupport()
       .getOrCreate()
 
