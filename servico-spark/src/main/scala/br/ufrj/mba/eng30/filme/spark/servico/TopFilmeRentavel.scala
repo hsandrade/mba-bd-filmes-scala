@@ -46,7 +46,7 @@ object TopFilmeRentavel extends NewSparkJob {
     fileDf.createOrReplaceTempView("topFilmeTemp")
     
     //executa consulta 
-    val queryDf = spark.sql("select movie_title, title_year, gross from topFilmeTemp order by gross desc, movie_title asc limit " + data)
+    val queryDf = spark.sql("select distinct movie_title, title_year, gross from topFilmeTemp order by gross desc, movie_title asc limit " + data)
 
     //retorna um String representando o JSON do DataFrame
     queryDf.toJSON.collect
