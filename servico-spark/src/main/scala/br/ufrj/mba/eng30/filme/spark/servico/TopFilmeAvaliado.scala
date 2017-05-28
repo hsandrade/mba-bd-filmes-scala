@@ -40,7 +40,7 @@ object TopFilmeAvaliado extends NewSparkJob {
     val structCli = strucTypeCsv()
 
     //criar um DataFrame a partir de um CSV, indicando que a primeira linha eh o cabecalho (para ignorar).
-    val fileDf = spark.read.option("header", "true").schema(structCli).csv(urlCsvFilmes)
+    val fileDf = spark.read.option("header", "true").schema(structCli).csv(urlCsvFilmes).distinct
 
     //criar tabela temporaria a partir do resultado do CSV para executar as consultas
     fileDf.createOrReplaceTempView("topFilmeAval")
