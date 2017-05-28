@@ -14,7 +14,7 @@ import Utilitario._
 /**
  * Objeto para calcular os Top X Rentaveis por Categoria.
  */
-object TopRentCateg extends NewSparkJob {
+object TopFilmeRentavel extends NewSparkJob {
 
   //tipo de objeto a ser informado no parametro da aplicacao
   type JobData = String
