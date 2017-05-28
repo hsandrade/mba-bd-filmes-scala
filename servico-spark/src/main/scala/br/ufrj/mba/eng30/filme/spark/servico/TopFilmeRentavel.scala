@@ -44,16 +44,16 @@ object TopRentCateg extends NewSparkJob {
 
     //criar tabela temporaria a partir do resultado do CSV para executar as consultas
     fileDf.createOrReplaceTempView("topFilmeTemp")
-
+    
     //executa consulta 
-    val queryDf = spark.sql("select movie_title, genres, gross from topFilmeTemp order by gross desc limit 10")
+    val queryDf = spark.sql("select movie_title, title_year, gross from topFilmeTemp order by gross desc, movie_title asc limit " + data)
 
     //retorna um String representando o JSON do DataFrame
     queryDf.toJSON.collect
   }
 
   /**
-   * Valida se a aplicacao recebeu algum parametro, com base no nome "idCliente".
+   * Valida se a aplicacao recebeu algum parametro de acordo com o job a ser processado.
    */
   def validate(sc: SparkContext, runtime: JobEnvironment, config: Config): JobData Or Every[ValidationProblem] = {
     Try(config.getString("top"))
