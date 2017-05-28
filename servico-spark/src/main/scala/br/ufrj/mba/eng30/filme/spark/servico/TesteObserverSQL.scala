@@ -20,7 +20,8 @@ object TesteObserverSQL extends NewSparkJob {
   type JobData = String
   
   //tipo de objeto a ser retornado pelo Job
-  type JobOutput = Array[String]
+  //type JobOutput = Array[String]
+  type JobOutput = String
 
   /**
    * Executa o Job.
@@ -60,7 +61,9 @@ object TesteObserverSQL extends NewSparkJob {
     //"Resultado 555 - validar : hdfs://hadoop-master:9000/mba/teste/clientes-json-2.csv"
     
     //retorna um String representando o JSON do DataFrame
-    cliDfTemp.toJSON.collect
+    //cliDfTemp.toJSON.collect
+    
+    spark.sparkContext.master
   }
 
   /**
