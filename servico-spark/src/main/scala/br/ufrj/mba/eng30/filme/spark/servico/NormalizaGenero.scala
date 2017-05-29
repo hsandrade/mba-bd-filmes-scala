@@ -65,7 +65,7 @@ object NormalizaGenero extends NewSparkJob {
    * Valida se a aplicacao recebeu algum parametro de acordo com o job a ser processado.
    */
   def validate(sc: SparkContext, runtime: JobEnvironment, config: Config): JobData Or Every[ValidationProblem] = {
-    Good(config.getString(""))
+    Good(config.getString("param"))
   }
 
 }
