@@ -62,18 +62,17 @@ object TopAtorRentavel extends NewSparkJob {
     val mapAtor3 = fileDf.map(linha => processarCampoAtor("actor_3_name", linha))
 
     //realiza a juncao entre os maps para realizar as demais acoes
-    val mapAtorUnion = mapAtor1.union(mapAtor2).union(mapAtor3)
+    val mapAtorUnion = mapAtor1.union(mapAtor2).union(mapAtor3).toDF("actor_name","gross")
     
-    //realiza a soma e contagem de filmes agrupando por nome do ator ("_1"),
-    //apos operacoes com map, nao foi possivel manter o nome original das colunas de acordo com o StructType
-    //TODO verificar como manter o nome original das colunas
-    val mapSomaAtor = mapAtorUnion.groupBy("_1").agg(sum("_2").as("gross"), count("_1").as("qtd_movies"))
+    //realiza a soma e contagem de filmes agrupando por nome do ator ("actor_name"),
+    //considerando que cada item no map representa um filme do ator
+    val mapSomaAtor = mapAtorUnion.groupBy("actor_name").agg(sum("gross").as("gross"), count("actor_name").as("qtd_movies"))
     
     //criar tabela temporaria a partir do resultado do CSV para executar as consultas
     mapSomaAtor.createOrReplaceTempView("topAtorTemp")
 
     //executa consulta 
-    val queryDf = spark.sql("select _1 as actor_name, gross, qtd_movies from topAtorTemp order by gross desc limit " + data)
+    val queryDf = spark.sql("select actor_name, gross, qtd_movies from topAtorTemp order by gross desc limit " + data)
 
     //retorna um String representando o JSON do DataFrame
     queryDf.toJSON.collect

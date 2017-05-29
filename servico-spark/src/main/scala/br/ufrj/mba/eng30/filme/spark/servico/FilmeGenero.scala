@@ -7,15 +7,14 @@ import com.typesafe.config.Config
 import org.scalactic._
 import scala.util.Try
 import org.apache.spark.sql._
-import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 
 import Utilitario._
 
 /**
- * Objeto para gerar uma lista normalizada de generos encontrados no CSV.
+ * Lista os filmes por Genero.
  */
-object NormalizaGenero extends NewSparkJob {
+object FilmeGenero extends NewSparkJob {
 
   //tipo de objeto a ser informado no parametro da aplicacao
   type JobData = String
@@ -33,37 +32,36 @@ object NormalizaGenero extends NewSparkJob {
     //inicia uma session com suporte a SQL
     val spark = SparkSession
       .builder()
-      .appName("NormalizaGenero")
+      .appName("FilmeCategoria")
       //.enableHiveSupport()
       .getOrCreate()
-      
-     import spark.implicits._
 
     //criar o schema para parse do CSV
     val structCli = strucTypeCsv()
 
     //criar um DataFrame a partir de um CSV, indicando que a primeira linha eh o cabecalho (para ignorar).
-    val fileDf = spark.read.option("header", "true").schema(structCli).csv(urlCsvFilmes)
+    val fileDf = spark.read.option("header", "true").schema(structCli).csv(urlCsvFilmes).distinct
+
+    //criar tabela temporaria a partir do resultado do CSV para executar as consultas
+    fileDf.createOrReplaceTempView("filmeCategTemp")
     
-    //gera um map de generos a partir de cada filme
-    def listaGeneros(linha: Row ) = {
-      linha.getAs[String]("genres").split("\\|")
-    }
-    
-    //prepara um flatMap para representar cada item do conjunto de array como sendo individual,
-    //evitando combinacao de genero devido a estrutura do CSV
-    //toDF("genre") define o nome da primeira coluna gerada apos o map, evitando nome automatico
-    val mapTemp = fileDf.flatMap(linha => listaGeneros(linha)).toDF("genre").cache
+    //executa consulta 
+    val queryDf = spark.sql("select distinct movie_title, title_year, gross, genres, movie_imdb_link, imdb_score " 
+        + "from filmeCategTemp "
+        + " where instr(genres,\"" + data + "\") > 0"
+        + " order by movie_title asc limit 50")
 
     //retorna um String representando o JSON do DataFrame
-    mapTemp.sort(asc("genre")).distinct.toJSON.collect
+    queryDf.toJSON.collect
   }
 
   /**
    * Valida se a aplicacao recebeu algum parametro de acordo com o job a ser processado.
    */
   def validate(sc: SparkContext, runtime: JobEnvironment, config: Config): JobData Or Every[ValidationProblem] = {
-    Good(config.getString(""))
+    Try(config.getString("genero"))
+      .map(words => Good(words))
+      .getOrElse(Bad(One(SingleProblem("No input.string param"))))
   }
 
 }
