@@ -29,6 +29,12 @@ object TesteObserverSQL extends NewSparkJob {
    * e "data" que representa a informacao enviada como parametro (ex: conteudo do body).
    */
   def runJob(sc: SparkContext, runtime: JobEnvironment, data: JobData): JobOutput = {
+    //definir propriedades de acesso ao banco MySql
+    val prop = new java.util.Properties
+    prop.setProperty("user","sparkjob")
+    prop.setProperty("password","ufrjmbajob")
+    val urlBanco = "jdbc:mysql://172.31.16.61:3306/spark_result"
+    
     //inicia uma session com suporte a SQL
     val spark = SparkSession
       .builder()
@@ -58,6 +64,9 @@ object TesteObserverSQL extends NewSparkJob {
     //cliDfTemp.toJSON.write.json("hdfs://hadoop-master:9000/mba/teste/clientes-json-2.csv")
     
     //"Resultado 555 - validar : hdfs://hadoop-master:9000/mba/teste/clientes-json-2.csv"
+    
+    //grava o resultado no banco de dados, recriando a tabela caso ja exista.
+    cliDfTemp.write.mode("overwrite").jdbc(urlBanco,"clienteTemp", prop)
     
     //retorna um String representando o JSON do DataFrame
     cliDfTemp.toJSON.collect
