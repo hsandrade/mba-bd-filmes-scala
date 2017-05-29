@@ -55,8 +55,10 @@ object NormalizaGenero extends NewSparkJob {
     //toDF("genre") define o nome da primeira coluna gerada apos o map, evitando nome automatico
     val mapTemp = fileDf.flatMap(linha => listaGeneros(linha)).toDF("genre").cache
 
+    mapTemp.createOrReplaceTempView("generos")
+    
     //retorna um String representando o JSON do DataFrame
-    mapTemp.sort(asc("genre")).distinct.toJSON.collect
+    spark.sql("select distinct genre from generos order by genre asc").toJSON.collect
   }
 
   /**
