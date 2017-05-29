@@ -49,7 +49,7 @@ object FilmeGenero extends NewSparkJob {
     val queryDf = spark.sql("select distinct movie_title, title_year, gross, genres, movie_imdb_link, imdb_score " 
         + "from filmeCategTemp "
         + " where instr(genres,\"" + data + "\") > 0"
-        + " order by movie_title asc limit 50")
+        + " order by movie_title asc limit 20")
 
     //retorna um String representando o JSON do DataFrame
     queryDf.toJSON.collect
