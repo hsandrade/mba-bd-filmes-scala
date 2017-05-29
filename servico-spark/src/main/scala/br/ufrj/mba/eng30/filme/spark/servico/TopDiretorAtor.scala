@@ -39,7 +39,7 @@ object TopDiretorAtor extends NewSparkJob {
 
     import spark.implicits._
 
-    val params = data.split(",");
+    val params = data.split(";");
     
     val nomeDiretor = params(0)
     val limitAtor = params(1)
@@ -93,7 +93,7 @@ object TopDiretorAtor extends NewSparkJob {
    * Valida se a aplicacao recebeu algum parametro de acordo com o job a ser processado.
    */
   def validate(sc: SparkContext, runtime: JobEnvironment, config: Config): JobData Or Every[ValidationProblem] = {
-    Try(config.getString("top"))
+    Try(config.getString("params"))
       .map(words => Good(words))
       .getOrElse(Bad(One(SingleProblem("No input.string param"))))
   }
