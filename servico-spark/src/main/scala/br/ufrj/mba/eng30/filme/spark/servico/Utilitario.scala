@@ -8,12 +8,19 @@ import org.apache.spark.sql.types._
  */
 object Utilitario {
 
+  val urlBanco = "jdbc:mysql://172.31.16.61:3306/spark_result"
+  
+  //definir propriedades de acesso ao banco MySql
+  val propBanco = new java.util.Properties
+  propBanco.setProperty("user", "sparkjob")
+  propBanco.setProperty("password", "ufrjmbajob")  
+
   /**
    * Definicao do StructType referente ao CSV de filmes
    */
   def strucTypeCsv(): StructType = {
     StructType(
-        StructField("color", StringType) ::
+      StructField("color", StringType) ::
         StructField("director_name", StringType) ::
         StructField("num_critic_for_reviews", LongType) ::
         StructField("duration", IntegerType) ::
@@ -42,12 +49,12 @@ object Utilitario {
         StructField("aspect_ratio", FloatType) ::
         StructField("movie_facebook_likes", StringType) :: Nil)
   }
-  
+
   /**
    * URL do Hadoop onde o CSV de filmes se encontra
    */
-  def urlCsvFilmes:String = {
+  def urlCsvFilmes: String = {
     "hdfs://hadoop-master:9000/mba/dados/movie_metadata.csv"
   }
-  
+
 }
