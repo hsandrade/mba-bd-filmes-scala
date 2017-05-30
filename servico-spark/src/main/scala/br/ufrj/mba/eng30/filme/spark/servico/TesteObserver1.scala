@@ -11,10 +11,12 @@ import scala.util.Try
 object TesteObserver1 extends NewSparkJob {
 
   type JobData = Seq[String]
-  type JobOutput = collection.Map[String, Long]
+  //type JobOutput = collection.Map[String, Long]
+  type JobOutput = String
 
   def runJob(sc: SparkContext, runtime: JobEnvironment, data: JobData): JobOutput = {
-    sc.parallelize(data).countByValue
+    //sc.parallelize(data).countByValue
+    sc.getConf.get("master")
   }
 
   def validate(sc: SparkContext, runtime: JobEnvironment, config: Config): JobData Or Every[ValidationProblem] = {
