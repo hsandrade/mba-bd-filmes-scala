@@ -1,0 +1,47 @@
+#https://github.com/spark-jobserver/spark-jobserver
+#https://www.youtube.com/watch?v=JKKqAgNkHZk
+
+#Interface JobServer : http://54.202.121.152:8090/
+
+#Consultar arquivo com roteiro avançado para compilação do Observer
+
+
+#compilar projeto (ou executar script de deploy, mais abaixo)
+cd /opt/mba/spark/tmp-trabalho/
+rm -rf mba-bd-filmes-scala/
+git clone https://github.com/hsandrade/mba-bd-filmes-scala
+cd mba-bd-filmes-scala/servico-spark/
+sbt package
+
+
+#script de deploy com os comandos acima:
+/opt/mba/spark/tmp-trabalho/deploy-projeto.sh
+
+
+
+#remover contexto
+curl -X "DELETE" 'localhost:8090/contexts/mba-context'
+
+
+#criar contexto pre-definido
+curl -d "" 'localhost:8090/contexts/mba-context?num-cpu-cores=4&memory-per-node=3072m'
+
+
+#remover o binario
+curl -X "DELETE" 'localhost:8090/binaries/servico-filme2'
+
+
+#enviar projeto para o observer
+curl --data-binary @target/scala-2.11/servico-spark_2.11-1.0.jar --header "content-type:application/java-archive" localhost:8090/binaries/servico-filme2
+
+
+#executar uma classe do serviço p/ teste
+curl -d "input.string = hh ss aa aa aaa bbb ccc hh" 'localhost:8090/jobs?appName=servico-filme2&context=mba-context&classPath=br.ufrj.mba.eng30.filme.spark.servico.TesteObserver1&sync=true&timeout=60'
+
+
+#com contexto
+curl -d "idCliente = 1001" 'localhost:8090/jobs?appName=servico-filme2&context=mba-context&classPath=br.ufrj.mba.eng30.filme.spark.servico.TesteObserverSQL&sync=true&timeout=60'
+
+
+#sem contexto
+curl -d "idCliente = 1001" 'localhost:8090/jobs?appName=servico-filme2&classPath=br.ufrj.mba.eng30.filme.spark.servico.TesteObserverSQL&sync=true&timeout=60'

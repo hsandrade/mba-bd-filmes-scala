@@ -1,0 +1,10 @@
+Roteiro-SistemaOperacional.txt
+Roteiro-Python.txt
+Roteiro-Hadoop-Standalone.txt
+Roteiro-Hadoop-Cluster.txt
+Roteiro-Zookeeper.txt
+Roteiro-Spark.txt
+Roteiro-Spark-Jobserver.txt
+Roteiro-Spark-Jobserver-Avançado.txt
+Roteiro-Spark-SQL-Server.txt
+Roteiro-Wildfly.txt

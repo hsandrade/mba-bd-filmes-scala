@@ -1,0 +1,13 @@
+#vi /etc/hosts
+172.31.16.30    hadoop-master
+172.31.16.31    hadoop-slave1
+172.31.16.32    hadoop-slave2
+172.31.16.40    spark-master
+172.31.16.43    spark-master2
+172.31.16.41    spark-slave1
+172.31.16.42    spark-slave2
+172.31.16.50	zookeeper1
+172.31.16.51	zookeeper2
+172.31.16.52	zookeeper3
+172.31.16.60	web
+172.31.16.61	mysql-master

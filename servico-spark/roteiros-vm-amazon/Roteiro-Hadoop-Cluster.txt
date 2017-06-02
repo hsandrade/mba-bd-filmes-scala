@@ -1,0 +1,190 @@
+#Considerando que já possui a instalação Standalone do Hadoop
+#https://letsdobigdata.wordpress.com/2014/01/13/setting-up-hadoop-multi-node-cluster-on-amazon-ec2-part-1/
+#https://letsdobigdata.wordpress.com/2014/01/13/setting-up-hadoop-1-2-1-multi-node-cluster-on-amazon-ec2-part-2/
+#https://tecadmin.net/set-up-hadoop-multi-node-cluster-on-centos-redhat/#
+
+#Referência para hadoop 2.7
+http://fibrevillage.com/storage/617-hadoop-2-7-cluster-installation-and-configuration-on-rhel7-centos7
+
+#utilizar root
+sudo su -
+
+
+#recomendado configurar um usuário específico para o hadoop, para fins de testes.
+useradd hadoop
+passwd hadoop
+#nova senha: ufrjmba
+
+
+#****** passwordless SSH ******
+#OBSERVAÇÃO: foi necessário habilitar a autenticação SSH dos slaves por senha (PasswordAuthentication) seguindo instruções
+#do site: https://community.hortonworks.com/questions/52307/how-to-create-password-less-ssh-between-two-aws-ec.html
+sudo su -
+vim /etc/ssh/sshd_config
+PasswordAuthentication yes
+
+service sshd restart
+
+
+#configurar passwordless SSH
+#executar o procedimento para cada VM
+su - hadoop
+ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
+cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+chmod 0600 ~/.ssh/authorized_keys
+#ssh-copy-id -i ~/.ssh/id_rsa.pub hadoop@hadoop-master
+ssh-copy-id -i ~/.ssh/id_rsa.pub hadoop@hadoop-slave1
+ssh-copy-id -i ~/.ssh/id_rsa.pub hadoop@hadoop-slave2
+exit
+
+
+#editar /etc/hosts com os mapeamentos dos servidores, após iniciar todas as VM's
+#referência no arquivo Roteiro-2-IPs.txt
+vim /etc/hosts
+
+
+#Configurar variáveis do Hadoop, adicionar ao já existente
+sudo vi /etc/profile.d/hadoop.sh
+
+export HADOOP_CONF=$HADOOP_HOME/etc/hadoop
+export HADOOP_INSTALL=$HADOOP_HOME
+export HADOOP_MAPRED_HOME=$HADOOP_HOME
+export HADOOP_COMMON_HOME=$HADOOP_HOME
+export HADOOP_HDFS_HOME=$HADOOP_HOME
+export YARN_HOME=$HADOOP_HOME
+export HADOOP_COMMON_LIB_NATIVE_DIR=$HADOOP_HOME/lib/native
+export PATH=$PATH:$HADOOP_HOME/sbin:$HADOOP_HOME/bin
+
+
+#reiniciar
+sudo init 6
+
+#*************configurar HADOOP *************
+
+#configurar variaveis de ambiente
+vim $HADOOP_CONF/hadoop-env.sh
+export HADOOP_OPTS="$HADOOP_OPTS -Djava.net.preferIPv4Stack=true -Djava.library.path=$HADOOP_HOME/lib/native"
+
+
+
+#core-site, incluir dentro da tag <configuration>
+vim $HADOOP_CONF/core-site.xml
+	<property>
+	    <name>fs.default.name</name>
+	    <value>hdfs://hadoop-master:9000/</value>
+	</property>
+	<property>
+	    <name>dfs.permissions</name>
+	    <value>false</value>
+	</property>
+
+
+#hdfs-site.xml (nameNode), incluir dentro da tag <configuration>
+su - hadoop
+mkdir -p /opt/mba/hadoop/namenode
+mkdir -p /opt/mba/hadoop/datanode
+mkdir -p /opt/mba/hadoop/namenode_namedir
+vim $HADOOP_CONF/hdfs-site.xml
+	<property>
+        <name>dfs.namenode.data.dir</name>
+        <value>/opt/mba/hadoop/namenode</value>
+	</property>
+	<property>
+		<name>dfs.datanode.data.dir</name>
+		<value>/opt/mba/hadoop/datanode</value>
+	</property>
+	<property>
+        <name>dfs.namenode.name.dir</name>
+        <value>/opt/mba/hadoop/namenode_namedir</value>
+	</property>	
+	<property>
+		<name>dfs.permissions</name>
+		<value>false</value>
+	</property>
+	<property>
+		<name>dfs.replication</name>
+		<value>3</value>
+	</property>
+
+
+#yarn-site.xml
+vim $HADOOP_CONF/yarn-site.xml
+	<property>
+	        <name>yarn.resourcemanager.hostname</name>
+	        <value>hadoop-master</value>
+	</property>
+	<property>
+	        <name>yarn.nodemanager.hostname</name>
+	        <value>hadoop-master</value> <!-- or hadoop-slave1, hadoop-slave2 de acordo com a instancia -->
+	</property>
+	<property>
+	  <name>yarn.nodemanager.aux-services</name>
+	    <value>mapreduce_shuffle</value>
+	</property>
+
+
+#mapred-site.xml, incluir dentro da tag <configuration>
+vim $HADOOP_CONF/mapred-site.xml
+    <property>
+        <name>mapreduce.framework.name</name>
+        <value>yarn</value>
+    </property>
+	<property>
+	    <name>mapred.job.tracker</name>
+		<value>hadoop-master:9001</value>
+	</property>
+
+
+#---- Configurar somente no master:
+#slaves
+vi $HADOOP_CONF/slaves
+hadoop-master
+hadoop-slave1
+hadoop-slave2
+
+#master
+hadoop-master
+
+#---- fim master
+
+
+#chown
+sudo su -
+chown -R hadoop:hadoop /opt/mba/hadoop
+
+
+#formatar namenode
+su - hadoop
+hdfs namenode -format
+
+
+#Iniciar serviço
+su - hadoop
+start-dfs.sh
+
+#opcional YARN, sera utilizado Spark
+start-yarn.sh 
+
+
+#Após iniciar os serviços, acessar URL's de acordo com o IP público do NameNode:
+http://54.200.14.128:50070/dfshealth.html#tab-overview
+
+http://54.200.14.128:8088/cluster/nodes
+http://54.200.14.128:8042/node
+http://54.244.63.215:8042/node
+http://54.245.192.246:8042/node
+
+
+
+#status do cluster
+hdfs dfsadmin -report
+
+
+#testar armazenamento do cluster
+hdfs dfs -mkdir /mba
+hdfs dfs -mkdir /mba/teste
+
+echo "conteudo-teste" > teste.txt
+hdfs dfs -put teste.txt /mba/teste/teste.txt
+
+hdfs dfs -ls /

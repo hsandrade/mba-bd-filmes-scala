@@ -1,0 +1,53 @@
+#************** Iniciar/Executar Thrift JDBC/ODBC Server ************** 
+#https://spark.apache.org/docs/latest/sql-programming-guide.html#distributed-sql-engine
+
+
+#configurar propriedades para possibilitar compartilhar sessões entre o Spark e ThriftServer
+#https://spark.apache.org/docs/latest/sql-programming-guide.html#upgrading-from-spark-sql-15-to-16
+#https://stackoverflow.com/questions/27108863/accessing-spark-sql-rdd-tables-through-the-thrift-server
+
+#configurar propriedades para o Hive
+vim $SPARK_HOME/conf/spark-defaults.conf
+spark.master spark://spark-master:7077
+spark.sql.hive.thriftServer.singleSession true
+hive.server2.thrift.bind.host 54.202.121.152
+
+
+
+#URL do gerenciamento após o serviço iniciado:
+http://54.202.121.152:4040/sqlserver/
+
+
+#Após instalar Spark adequadamente, executar o script:
+start-thriftserver.sh
+
+#Por padrão, o IP bind será o IP local da VM (ex 172.31.16.40) e a porta é 10000, para mudar:
+export HIVE_SERVER2_THRIFT_PORT=<listening-port>
+export HIVE_SERVER2_THRIFT_BIND_HOST=<listening-host>
+
+#OU definir parâmetros no script
+start-thriftserver.sh \
+  --hiveconf hive.server2.thrift.port=<listening-port> \
+  --hiveconf hive.server2.thrift.bind.host=<listening-host> \
+
+#consultar documentação para mais opções de parâmetros
+
+
+#uma vez iniciado, executar o comando abaixo para acessar o console p/ testar o acesso:
+beeline
+
+
+#após abrir o console beeline, conectar ao banco:
+!connect jdbc:hive2://172.31.16.40:10000
+
+#deve solicitar usuário e senha, basta deixar em branco para fins de testes
+
+
+
+#para conectar ao Hive via JDBC, seguir tutorial: https://cwiki.apache.org/confluence/display/Hive/HiveServer2+Clients#HiveServer2Clients-IntegrationwithSQuirrelSQLClient
+
+#No Squirrel: Criar um Driver adicionar 2 jars que estão na pasta /jars do Spark 2.1.1: hadoop-common-.2.7.2jar e hive-jdbc-1.2.1.jar, em seguida clicar no botão 'List Drivers'. Para biblioteca completa conferir arquivo squirrel-hive-jdbc-driver.png
+
+
+
+

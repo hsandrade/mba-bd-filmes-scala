@@ -1,0 +1,71 @@
+#Sistema Operacional: CentOS 7 minimal
+
+#usuário: root, senha: ufrj2017
+#IP local: 192.168.81.130
+#URL interface: http://192.168.81.130:50070/dfshealth.html#tab-overview
+
+#root: ufrj2017
+
+
+#instalar SSH (não precisa se for instância da Amazon)
+yum install openssh openssh-server openssh-clients openssl-libs
+
+
+#instalar ferramentas de rede, como ifconfig para ver as configurações de IP
+#(não precisa se for instância da Amazon)
+yum install net-tools
+
+
+#Instalar wget
+yum install wget
+
+
+#Criar diretorio principal
+mkdir -p /opt/mba/hadoop
+mkdir -p /opt/mba/spark
+mkdir -p /opt/mba/jdk
+mkdir -p /opt/mba/python
+mkdir -p /opt/mba/zookeeper
+
+
+#Instalar JDK 1.8
+cd /opt/mba/jdk
+wget --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie;" http://download.oracle.com/otn-pub/java/jdk/8u131-b11/d54c1d3a095b4ff2b6607d096fa80163/jdk-8u131-linux-x64.rpm
+rpm -Uvh jdk-8u131-linux-x64.rpm
+
+
+#Configurar JAVA_HOME (persistir apos reiniciar servidor)
+sudo vi /etc/profile.d/java.sh
+JAVA_HOME=/usr/java/latest
+export JAVA_HOME
+
+
+#Definir JAVA_HOME na primeira sessao (antes de reiniciar o servidor pela primeira vez)
+export JAVA_HOME=/usr/java/latest
+
+
+#Desativar firewall
+systemctl stop firewalld
+systemctl disable firewalld
+
+#Desativar SELinux
+setenforce 0
+vi /etc/selinux/config
+#definir 'SELINUX' para disabled
+
+
+#Definir TimeZone
+sudo su -
+timedatectl set-timezone America/Sao_Paulo
+
+
+#criar Swap
+sudo su -
+sudo /bin/dd if=/dev/zero of=/var/swap.1 bs=1M count=2048
+sudo /sbin/mkswap /var/swap.1
+sudo chmod 600 /var/swap.1
+sudo /sbin/swapon /var/swap.1
+
+
+#reiniciar VM
+sudo init 6

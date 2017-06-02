@@ -1,0 +1,33 @@
+#************** Atualizar Python ************** 
+#http://www.codeghar.com/blog/install-latest-python-on-centos-7.html
+#http://www.yourownlinux.com/2016/10/install-python-centos-ubuntu-linux.html
+
+
+
+#Baixar versão específica do Python, página com lista completa: https://www.python.org/ftp/python/
+cd /opt/mba/python
+wget https://www.python.org/ftp/python/3.4.6/Python-3.4.6.tgz
+tar -xvzf Python-3.4.6.tgz
+
+
+#Instalar compilador C
+yum install gcc
+
+
+
+#compilar Python
+cd Python-3.4.6
+./configure --prefix=/usr/local
+make altinstall
+
+
+#mudar o Alias (durante seção)
+alias python=/usr/local/bin/python3.4
+
+#mudar Alias (permanente)
+vi ~/.bashrc
+alias python=/usr/local/bin/python3.4
+
+
+#verificar versão do Python atual
+python -V

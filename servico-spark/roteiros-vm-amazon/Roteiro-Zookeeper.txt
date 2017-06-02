@@ -1,0 +1,84 @@
+#***** Zookeeper *****
+#http://spark.apache.org/docs/2.1.0/spark-standalone.html
+#http://spark.apache.org/docs/2.1.0/configuration.html#deploy
+#http://stackoverflow.com/questions/24183904/how-to-set-up-spark-with-zookeeper-for-ha
+
+#http://zookeeper.apache.org/doc/trunk/zookeeperStarted.html#sc_InstallingSingleMode
+
+#criar usuario
+sudo su -
+useradd zookeeper
+passwd zookeeper
+#nova senha: ufrjmba
+
+
+#preparar diretorio
+mkdir -p /opt/mba/zookeeper
+mkdir -p /opt/mba/zookeeper/data
+cd /opt/mba/zookeeper
+wget http://mirror.nbtelecom.com.br/apache/zookeeper/zookeeper-3.4.10/zookeeper-3.4.10.tar.gz
+tar -xvf zookeeper-3.4.10.tar.gz
+
+
+
+#Criar variáveis de ambiente
+vi /etc/profile.d/zookeeper.sh
+ZOOKEEPER_HOME=/opt/mba/zookeeper/zookeeper-3.4.10
+export ZOOKEEPER_HOME
+export PATH=$PATH:$ZOOKEEPER_HOME/bin
+
+#Exportar variável para a seção atual
+export ZOOKEEPER_HOME=/opt/mba/zookeeper/zookeeper-3.4.10
+
+
+#Configurar o zookeeper (modo cluster)
+vim $ZOOKEEPER_HOME/conf/zoo.cfg
+tickTime=2000
+dataDir=/opt/mba/zookeeper/data
+clientPort=2181
+initLimit=5
+syncLimit=3
+server.1=zookeeper1:2888:3888
+server.2=zookeeper2:2888:3888
+server.3=zookeeper3:2888:3888
+
+
+#criar a pasta informando o id do server (repetir o processo em cada instância do Zookeeper, de acordo com o zoo.cfg)
+vi $ZOOKEEPER_HOME/../data/myid
+1
+
+
+
+#preparar execução
+chown -R zookeeper:zookeeper /opt/mba/zookeeper/
+
+init 6
+
+#iniciar servidor
+su - zookeeper
+zkServer.sh start
+
+
+#conectar via client e executar comandos
+su - zookeeper
+zkCli.sh -server zookeeper1:2181
+
+#basta conectar, se estiver funcionando acessará o console do Zookeeper, para sair:
+quit
+
+#No terminal ZK: listar as "pastas":
+ls /
+#ver statisticas do path (de acordo com o resultado da listagem):
+stat /zookeeper
+
+
+#----- Configurar Spark MASTERS ------
+vim $SPARK_HOME/conf/spark-env.sh
+export SPARK_DAEMON_JAVA_OPTS="-Dspark.deploy.recoveryMode=ZOOKEEPER -Dspark.deploy.zookeeper.url=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181 -Dspark.deploy.zookeeper.dir=/sparkha"
+
+
+
+#permissão de execução do script
+sudo su -
+chmod +x $SPARK_HOME/conf/spark-env.sh
+

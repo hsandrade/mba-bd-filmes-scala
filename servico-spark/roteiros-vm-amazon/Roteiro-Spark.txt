@@ -1,0 +1,112 @@
+#************** Instalar SPARK ************** 
+#http://spark.apache.org/docs/2.1.0/
+#https://github.com/matthewkovacs/spark-tutorials/wiki/Install-Apache-Spark-on-Centos-7-Cluster
+
+
+#URL APÓS instalação e execução local:
+Interface: http://192.168.81.130:8080/
+Host personalizado no Windows: http://mba.bigdata:8080/
+Host personalizado no Windows (Slave): http://mba.bigdata:8090/
+
+
+#URL APÓS instalação e execução na AMAZON:
+http://54.202.121.152:8080/
+
+http://54.202.121.152:8081/
+http://34.209.47.103.45:8081/
+http://54.186.182.254:8081/
+
+#Thrift JDBC/ODBC Server 
+http://54.202.121.152:4040/sqlserver/
+
+#sudo
+sudo su -
+
+
+#criar usuário spark
+useradd spark
+passwd spark
+#nova senha: ufrjmba
+
+
+#Baixar e descompactar Spark
+cd /opt/mba/spark/
+wget http://d3kbcqa49mib13.cloudfront.net/spark-2.1.1-bin-hadoop2.7.tgz
+tar -xvzf spark-2.1.1-bin-hadoop2.7.tgz
+
+
+
+#Criar variáveis de ambiente
+sudo vi /etc/profile.d/spark.sh
+SPARK_HOME=/opt/mba/spark/spark-2.1.1-bin-hadoop2.7
+export SPARK_HOME
+export PATH=$PATH:$SPARK_HOME/sbin:$SPARK_HOME/bin
+
+
+#exportar variável para a seção atual
+export SPARK_HOME=/opt/mba/spark/spark-2.1.1-bin-hadoop2.7
+
+
+#**** Instalar SBT ****
+curl https://bintray.com/sbt/rpm/rpm | sudo tee /etc/yum.repos.d/bintray-sbt-rpm.repo
+sudo yum install sbt
+
+
+
+#Rodar em CLUSTER Standalone
+#http://spark.apache.org/docs/2.1.0/spark-standalone.html
+
+
+#configurar passwordless SSH
+#executar o procedimento para cada VM
+su - spark
+ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
+cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+chmod 0600 ~/.ssh/authorized_keys
+ssh-copy-id -i ~/.ssh/id_rsa.pub spark@spark-master
+ssh-copy-id -i ~/.ssh/id_rsa.pub spark@spark-slave1
+ssh-copy-id -i ~/.ssh/id_rsa.pub spark@spark-slave2
+
+
+#NO MASTER, definir os slaves
+vim $SPARK_HOME/conf/slaves
+spark-master
+spark-slave1
+spark-slave2
+spark-master2
+
+
+
+#chown
+sudo su -
+chown -R spark:spark /opt/mba/spark
+
+
+#Iniciar master e automaticamente os slaves(modo cluster na Amazon)
+start-all.sh
+
+
+----------------------
+#OBS: verificar roteiro do Zookeeper para múltiplos masters
+vim $SPARK_HOME/conf/spark-env.sh
+export SPARK_DAEMON_JAVA_OPTS="-Dspark.deploy.recoveryMode=ZOOKEEPER -Dspark.deploy.zookeeper.url=zookeeper1:2181,zookeeper2:2181,zookeeper3:2181 -Dspark.deploy.zookeeper.dir=/sparkha"
+
+
+#importante definir bind para o spark: https://spark.apache.org/docs/latest/spark-standalone.html
+vim $SPARK_HOME/conf/spark-env.sh
+export SPARK_MASTER_HOST=54.200.116.126
+
+
+#permissão de execução do script
+sudo su -
+chmod +x $SPARK_HOME/conf/spark-env.sh
+
+---------------------
+
+
+#SLAVE (parâmetros adicionais caso esteja na mesma máquina do Master)
+#onde spark://localhost:7077 refere-se a URL do master
+#./sbin/start-slave.sh spark://localhost:7077 -p 7087 --webui-port 8090 -m 2G
+
+#acessar interface do slave
+#http://mba.bigdata:8090/

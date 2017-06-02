@@ -1,0 +1,137 @@
+#Roteiro Wildfly
+
+#sudo
+sudo su -
+
+
+#criar usuário jboss
+useradd jboss
+passwd jboss
+#nova senha: ufrjmba
+
+
+#Baixar e descompactar JBoss Wildfly 10
+mkdir /opt/mba/jboss/
+cd /opt/mba/jboss/
+wget http://download.jboss.org/wildfly/10.1.0.Final/wildfly-10.1.0.Final.zip
+unzip wildfly-10.1.0.Final.zip
+cd wildfly-10.1.0.Final
+
+
+#mudar a porta http para 80, e bind do <interface name="public"> para 0.0.0.0
+vim /opt/mba/jboss/wildfly-10.1.0.Final/standalone/configuration/standalone.xml
+
+
+#
+vi /etc/profile.d/jboss.sh
+JBOSS_HOME=/opt/mba/jboss/wildfly-10.1.0.Final/
+export JBOSS_HOME
+
+
+
+
+#criar serviço
+vi /etc/init.d/jboss
+#!/bin/bash
+### BEGIN INIT INFO
+# Provides:          jboss-as
+# Required-Start:    $local_fs $remote_fs $network $syslog
+# Required-Stop:     $local_fs $remote_fs $network $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start/Stop JBoss AS 7
+### END INIT INFO
+# chkconfig: 35 92 1
+
+## Include some script files in order to set and export environmental variables
+## as well as add the appropriate executables to $PATH.
+[ -r /etc/profile.d/java.sh ] && . /etc/profile.d/java.sh
+[ -r /etc/profile.d/jboss.sh ] && . /etc/profile.d/jboss.sh
+
+JBOSS_USER=root
+JBOSS_CONSOLE_LOG=$JBOSS_HOME/standalone/log/console.log
+
+case "$1" in
+    start)
+        echo "Starting Wildfly..."
+        /bin/su - ${JBOSS_USER} ${JBOSS_HOME}/bin/standalone.sh > ${JBOSS_CONSOLE_LOG} &        ##  If running as user "jboss"
+    ;;
+    stop)
+        echo "Stopping JBoss AS 7..."
+        /bin/su - ${JBOSS_USER} -c "${JBOSS_HOME}/bin/jboss-cli.sh --connect command=:shutdown &"  ##  If running as user "jboss"
+    ;;
+    *)
+        echo "Usage: /etc/init.d/jboss-as {start|stop}"; exit 1;
+    ;;
+esac
+
+
+- Definir a permissão do script de inicialização
+sudo chmod +x /etc/init.d/jboss 
+
+- Configurar o script para executar nos níveis 2,3,4 e 5
+sudo chkconfig --level 2345 jboss on
+
+
+
+
+
+#
+vim /opt/mba/jboss/wildfly-10.1.0.Final/bin/standalone.conf
+JAVA_OPTS="-Xms64m -Xmx1560m -XX:MetaspaceSize=96M -XX:MaxMetaspaceSize=368m -Djava.net.preferIPv4Stack=true"
+
+
+
+#
+service jboss start
+
+
+#
+tailf /opt/mba/jboss/wildfly-10.1.0.Final/standalone/log/console.log
+
+
+#******* PROJETO
+mkdir -p /opt/mba/maven
+cd /opt/mba/maven
+wget https://archive.apache.org/dist/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.tar.gz
+tar -xvf apache-maven-3.3.9-bin.tar.gz
+mkdir -p /opt/mba/maven/apache-maven-3.3.9/repo
+vim apache-maven-3.3.9/conf/settings.xml
+#configurar repositorio
+<localRepository>/opt/mba/maven/apache-maven-3.3.9/repo</localRepository>
+
+#configurar variaveis de ambiente do Maven
+vim ~/.bashrc
+#adicionar apos os aliases:
+export M2_HOME=/opt/mba/maven/apache-maven-3.3.9
+export M2=$M2_HOME/bin 
+export PATH=$M2:$PATH
+
+#executar
+source ~/.bashrc
+
+#verificar version
+mvn -version
+
+
+#preparar o projeto
+mkdir -p /opt/mba/projeto
+cd /opt/mba/projeto
+yum install git
+
+
+#build do projeto (criar script .sh)
+rm -rf /opt/mba/projeto/mba-bd-filmes
+cd /opt/mba/projeto
+git clone https://github.com/hsandrade/mba-bd-filmes
+cd /opt/mba/projeto/mba-bd-filmes/filme-spark-web/
+mvn install
+cp target/filme-spark-web.war $JBOSS_HOME/standalone/deployments
+tailf /opt/mba/jboss/wildfly-10.1.0.Final/standalone/log/console.log
+
+#ou executar script com os comandos acima
+/opt/mba/projeto/deploy-projeto.sh
+
+
+#acessar aplicação
+http://54.187.95.186/filme-spark-web/rest/cliente-spark

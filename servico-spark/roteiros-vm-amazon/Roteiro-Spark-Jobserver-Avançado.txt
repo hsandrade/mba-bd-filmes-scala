@@ -1,0 +1,234 @@
+#********Build do SparkObserver
+
+export VER=`sbt version | tail -1 | cut -f2`
+
+#repositorio alternativo
+#https://github.com/esi-mineset/spark-jobserver/tree/spark-2.1.0-bb
+
+
+#*** BAIXAR DRIVER DO MYSQL EM CADA NODE
+mkdir -p /opt/mba/spark/lib
+cd /opt/mba/spark/lib
+wget https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-5.1.42.tar.gz
+tar -xvf mysql-connector-java-5.1.42.tar.gz
+cd mysql-connector-java-5.1.42
+cp mysql-connector-java-5.1.42-bin.jar ../
+cd ../
+rm -rf mysql-connector-java-5.1.42 mysql-connector-java-5.1.42.tar.gz
+cp mysql-connector-java-5.1.42-bin.jar /opt/mba/spark/spark-2.1.1-bin-hadoop2.7/jars/
+
+
+
+#*** baixar e configurar projeto do SPARK-JOBSERVER
+mkdir -p /opt/mba/spark/spark-observer
+cd /opt/mba/spark/spark-observer
+git clone -b spark-2.1.1-bb https://github.com/esi-mineset/spark-jobserver
+cd spark-jobserver/config
+
+#*****criar os arquivos de configuracao com conteudos a seguir:
+#configuracao para criar o start_server
+
+vim /opt/mba/spark/spark-observer/spark-jobserver/job-server/config/local.sh
+
+# Environment and deploy file
+# For use with bin/server_deploy, bin/server_package etc.
+DEPLOY_HOSTS="spark-master"
+
+APP_USER=root
+APP_GROUP=root
+JMX_PORT=9999
+# optional SSH Key to login to deploy server
+#SSH_KEY=/path/to/keyfile.pem
+INSTALL_DIR=/opt/mba/spark/spark-observer
+LOG_DIR=/opt/mba/spark/spark-observer/log
+PIDFILE=spark-jobserver.pid
+JOBSERVER_MEMORY=1G
+SPARK_VERSION=2.1.1
+MAX_DIRECT_MEMORY=512M
+SPARK_HOME=/opt/mba/spark/spark-2.1.1-bin-hadoop2.7
+SPARK_CONF_DIR=$SPARK_HOME/conf
+# Only needed for Mesos deploys
+SPARK_EXECUTOR_URI=/opt/mba/spark/spark-2.1.1-bin-hadoop2.7.tgz
+# Only needed for YARN running outside of the cluster
+# You will need to COPY these files from your cluster to the remote machine
+# Normally these are kept on the cluster in /etc/hadoop/conf
+# YARN_CONF_DIR=/pathToRemoteConf/conf
+# HADOOP_CONF_DIR=/pathToRemoteConf/conf
+#
+# Also optional: extra JVM args for spark-submit
+# export SPARK_SUBMIT_OPTS+="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5433"
+SCALA_VERSION=2.11.8 # or 2.11.6
+REMOTE_JOBSERVER_DIR=hdfs://hadoop-master:9000/mba/observer/jobserver-dir
+MESOS_SPARK_DISPATCHER=mesos://127.0.0.1:7077
+
+
+
+
+#*****local.conf
+vim /opt/mba/spark/spark-observer/spark-jobserver/job-server/config/local.conf
+#ou vim /opt/mba/spark/spark-observer/custom-deploy/local.conf
+
+# Template for a Spark Job Server configuration file
+# When deployed these settings are loaded when job server starts
+#
+# Spark Cluster / Job Server configuration
+spark {
+  # spark.master will be passed to each job's JobContext
+  spark.master = "spark://spark-master:7077"
+  master = "spark://spark-master:7077"
+  # master = "mesos://vm28-hulk-pub:5050"
+  # master = "yarn-client"
+
+  # Default # of CPUs for jobs to use for Spark standalone cluster
+  job-number-cpus = 1
+
+  jobserver {
+    port = 8090
+    context-per-jvm = true
+    #spark.jobserver.context-creation-timeout = 120s
+    #context-creation-timeout = 120s
+
+    # Note: JobFileDAO is deprecated from v0.7.0 because of issues in
+    # production and will be removed in future, now defaults to H2 file.
+    jobdao = spark.jobserver.io.JobSqlDAO
+    #jobdao = spark.jobserver.io.JobFileDAO
+
+    filedao {
+      rootdir = /tmp/spark-jobserver/filedao/data
+    }
+
+    datadao {
+      # storage directory for files that are uploaded to the server
+      # via POST/data commands
+      rootdir = /opt/mba/spark/spark-observer/upload
+    }
+
+    sqldao {
+      slick-driver = slick.driver.MySQLDriver
+      #slick-driver = slick.driver.H2Driver
+      jdbc-driver = com.mysql.jdbc.Driver
+      #jdbc-driver = org.h2.Driver
+      jdbc {
+        url = "jdbc:mysql://172.31.16.61/job_server?createDatabaseIfNotExist=true"
+        user = "root"
+        password = "ufrjmba"
+      }
+      rootdir = /opt/mba/spark/spark-observer/sqldao/data
+      #jdbc {
+      #  url = "jdbc:h2:file:/opt/mba/spark/spark-observer/sqldao/data/h2-db;AUTO_SERVER=TRUE"
+      #  user = ""
+      #  password = ""
+      #}
+      dbcp {
+        enabled = false
+        maxactive = 20
+        maxidle = 10
+        initialsize = 10
+      }
+    }
+
+    # When using chunked transfer encoding with scala Stream job results, this is the size of each chunk
+    result-chunk-size = 1m
+  }
+
+  # Predefined Spark contexts
+  # contexts {
+  #   my-low-latency-context {
+  #     num-cpu-cores = 1           # Number of cores to allocate.  Required.
+  #     memory-per-node = 512m         # Executor memory per node, -Xmx style eg 512m, 1G, etc.
+  #   }
+  #   # define additional contexts here
+  # }
+
+  # Universal context configuration.  These settings can be overridden, see README.md
+  context-settings {
+    num-cpu-cores = 2           # Number of cores to allocate.  Required.
+    memory-per-node = 1G         # Executor memory per node, -Xmx style eg 512m, #1G, etc.
+
+    spark.ui.port = 4040
+    spark.sql.shuffle.partitions = 4
+    #spark.default.parallelism = 20   # ~4x num cores
+    spark.driver.maxResultSize = 1G
+    spark.serializer = org.apache.spark.serializer.KryoSerializer
+    #spark.kryo.registrationRequired = true
+    spark.kryoserializer.buffer.max = 256m
+    spark.kryo.classesToRegister = "scala.collection.mutable.LinkedHashMap"
+    spark.scheduler.mode = "FAIR"
+
+    # In case spark distribution should be accessed from HDFS (as opposed to being installed on every Mesos slave)
+    # spark.executor.uri = "hdfs://namenode:8020/apps/spark/spark.tgz"
+
+    # URIs of Jars to be loaded into the classpath for this context.
+    # Uris is a string list, or a string separated by commas ','
+    # dependent-jar-uris = ["file:///some/path/present/in/each/mesos/slave/somepackage.jar"]
+    dependent-jar-uris = ["file:///opt/mba/spark/lib/mysql-connector-java-5.1.42-bin.jar"]
+
+    # Add settings you wish to pass directly to the sparkConf as-is such as Hadoop connection
+    # settings that don't use the "spark." prefix
+    passthrough {
+      #es.nodes = "192.1.1.1"
+    }
+  }
+
+  spray.can.server {
+    idle-timeout = 560 s
+    request-timeout = 480 s
+  }
+
+  # This needs to match SPARK_HOME for cluster SparkContexts to be created successfully
+  # home = "/home/spark/spark"
+}
+
+flyway.locations="db/mysql/migration"
+
+# Note that you can use this file to define settings not only for job server,
+# but for your Spark jobs as well.  Spark job configuration merges with this configuration file as defaults.
+
+akka {
+  remote.netty.tcp {
+    # This controls the maximum message size, including job results, that can be sent
+    # maximum-frame-size = 10 MiB
+  }
+}
+
+
+
+
+
+
+#*****compilar spark-objserver
+sbt clean package
+
+
+
+#*****após terminar a compilação com sucesso, gerar pacote
+cd ../bin
+./server_package.sh local
+mv /tmp/job-server/job-server.tar.gz .
+mkdir -p /opt/mba/spark/spark-observer/custom-deploy/
+mv job-server.tar.gz /opt/mba/spark/spark-observer/custom-deploy/
+cd /opt/mba/spark/spark-observer/custom-deploy/
+tar -xvf job-server.tar.gz
+cp spark-job-server.jar $SPARK_HOME/jars
+wget http://www.java2s.com/Code/JarDownload/akka/akka-slf4j_2.11.0-RC3-2.3.0.jar.zip
+unzip akka-slf4j_2.11.0-RC3-2.3.0.jar.zip
+mv akka-slf4j_2.11.0-RC3-2.3.0.jar $SPARK_HOME/jars
+
+
+#reiniciar SparkServer
+stop-all.sh
+start-all.sh
+
+
+#preparar SparkObserver
+cd /opt/mba/spark/spark-observer/custom-deploy/
+./server_start.sh
+
+
+#VERIFICAR LOG's
+tailf ../log/server_start.log
+tailf ../log/spark-job-server.log
+
+
+
+#ACESSAR INTERFACE, SUMBETER APLICAÇÃO E TESTAR

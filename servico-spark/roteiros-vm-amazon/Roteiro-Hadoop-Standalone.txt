@@ -1,0 +1,72 @@
+#************** Instalar HADOOP ************** 
+#http://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-common/SingleCluster.html
+
+#Instalar ferramentas de apoio
+yum install rsync
+
+#baixar Hadoop (2.7.3)
+cd /opt/mba/hadoop
+wget http://mirror.nbtelecom.com.br/apache/hadoop/common/hadoop-2.7.3/hadoop-2.7.3.tar.gz
+#URL alternativa: http://ftp.unicamp.br/pub/apache/hadoop/common/hadoop-2.7.3/hadoop-2.7.3.tar.gz
+
+#descompactar hadoop
+tar -xvf hadoop-2.7.3.tar.gz
+
+
+#Configurar HADOOP_HOME
+sudo vi /etc/profile.d/hadoop.sh
+HADOOP_HOME=/opt/mba/hadoop/hadoop-2.7.3
+export HADOOP_HOME
+
+
+#Configurar HADOOP_HOME (seção antes do primeiro restart)
+export HADOOP_HOME=/opt/mba/hadoop/hadoop-2.7.3
+
+
+#Configurar o JAVA_HOME nos parâmetros do Hadoop
+cd hadoop-2.7.3
+vi etc/hadoop/hadoop-env.sh
+#localizar o JAVA_HOME e definir o valor para:
+export JAVA_HOME=/usr/java/latest
+
+
+
+#Configurar Hadoop no modo STANDALONE
+cd $HADOOP_HOME
+mkdir input
+cp etc/hadoop/*.xml input
+bin/hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.3.jar grep input output 'dfs[a-z.]+'
+cat output/*
+
+
+#IMPORTANTE: Configurar Hadoop no modo PSEUDO-DISTRIBUTE, SEGUIR INSTRUÇÕES DO LINK ABAIXO
+#http://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-common/SingleCluster.html#Pseudo-Distributed_Operation
+
+
+
+#******* Configurar SSH sem senha ******* 
+ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
+cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+chmod 0600 ~/.ssh/authorized_keys
+
+#Testar ssh sem senha (não deve pedir senha):
+ssh localhost
+#sair do ssh
+exit
+
+
+
+#******* EXECUTAR Hadoop ******* 
+cd $HADOOP_HOME
+
+#Formatar (primeira vez apenas)
+bin/hdfs namenode -format
+
+
+#Iniciar
+sbin/start-dfs.sh
+
+
+#Criar usuário no FileSystem
+bin/hdfs dfs -mkdir /user
+bin/hdfs dfs -mkdir /user/mba
