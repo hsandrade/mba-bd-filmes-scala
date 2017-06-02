@@ -46,7 +46,7 @@ object FilmeGenero extends NewSparkJob {
     fileDf.createOrReplaceTempView("filmeCategTemp")
     
     //executa consulta 
-    val queryDf = spark.sql("select distinct movie_title, title_year, gross, genres, movie_imdb_link, imdb_score " 
+    val queryDf = spark.sql("select movie_title, title_year, gross, genres, movie_imdb_link, imdb_score " 
         + "from filmeCategTemp "
         + " where instr(genres,\"" + data + "\") > 0"
         + " order by movie_title asc limit 20")
